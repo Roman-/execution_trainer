@@ -135,16 +135,13 @@ void Probs::save_to_file(QString filepath) {
     }
     QTextStream outstream( &out );
     outstream.setCodec("UTF-8");
-
-    QString letter1, letter2;
-    for (map<QString, map<QString, double> >::iterator row = probs_.begin(); row != probs_.end(); ++ row) {
-        letter1 = row->first;
-        for (map<QString, double>::const_iterator p = row->second.begin(); p != row->second.end(); ++ p) {
-            letter2 = p->first;
-            QString ankiLine = letter1 + " " + letter2 + ": " + p->second + "\n";
-            outstream << ankiLine;
+    map<QString, map<QString, double> >::iterator it1;
+    for (it1 = probs_.begin(); it1 != probs_.end(); ++it1) {
+        map<QString, double>::iterator it2;
+        for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2) {
+            QString line = it1->first + " " + it2->first + ": " + QString::number(it2->second) + "\n";
+            outstream << line;
         }
     }
     out.close();
 }
-

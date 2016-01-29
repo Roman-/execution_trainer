@@ -17,7 +17,7 @@ void test_make_chain_using_probs() {
     p("Ш", "З") *= 319;
     p.normalize();
     // making chain
-    //p.save_to_file("files/x_probs");
+    p.save_to_file("files/x_probs.txt");
     //Probs p2("files/x_probs");
     //p2.output();
 //    auto images = load_images("files/images.txt");
@@ -35,11 +35,6 @@ int main(int argc, char *argv[])
     //for (int i = 0; i < 20; ++i)
         test_make_chain_using_probs();
     //qDebug() << "This thing is being used for test";
-
-
-
-
-
 
     return a.exec();
 }
