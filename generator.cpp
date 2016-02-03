@@ -34,8 +34,6 @@ QString vector_to_words(vector<QString> r, map<QString, map<QString, QString>> i
 //    return result;
 //}
 
-
-
 vector<QString> generate_chain_by_shuffling(vector<pair<int, int>> chain, vector<vector<QString>> speffz) {
     rotate(chain.begin(),
            chain.begin() + rand() %  chain.size(),

@@ -7,6 +7,7 @@
 #include <map>
 #include <ctime>
 #include <cassert>
+#include <QTextCodec>
 #include "linewithtabs.h"
 
 using namespace std;
@@ -22,7 +23,7 @@ public:
     double sum(); // sum of all probabilities
     void normalize(); // make sum be equal to 1*size
     void output(); // prints probs to console
-    std::pair<QString, QString> define_first_letterpair();
+    std::pair<QString, QString> define_first_letterpair(int n = 6); // select one of top n elements
     // based on probability of letter-pair <current, available[i]> defines next letter in chain
     QString define_next_letter(QString current_letter, vector<QString> available_letters);
     void save_to_file(QString filepath);

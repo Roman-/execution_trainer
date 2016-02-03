@@ -60,25 +60,16 @@ double& Probs::operator() (QString letter1, QString letter2) {
 }
 
 Probs::Probs(QString file_path) {
-    // stopped there
-    /*
-    vector<vector<QString> > result;
     QFile file(file_path);
     assert(file.open(QIODevice::ReadOnly | QIODevice::Text) && "open file");
     while (!file.atEnd()) {
-        vector<QString> current_row;
-        QString line = file.readLine();
+        QString line = ((QString)(file.readLine())).toUtf8();
         QTextStream stream(&line);
-        while (!stream.atEnd()) {
-            QString current_letter;
-            stream >> current_letter;
-            if (current_letter != "")
-                current_row.push_back(current_letter);
-        }
-        result.push_back(current_row);
+        QString l1, l2;
+        double p;
+        stream >> l1 >> l2 >> p;
+        probs_[l1][l2] = p;
     }
-    return result;
-    */
 }
 
 QString to_string(vector<QString> r) {
@@ -89,42 +80,46 @@ QString to_string(vector<QString> r) {
 }
 
 QString Probs::define_next_letter(QString current_letter, vector<QString> available_letters) {
-    qDebug() << "define_next_letter for " << current_letter << " from " << to_string(available_letters);
+    //qDebug() << "define_next_letter for " << current_letter << " from " << to_string(available_letters);
     double sum_of_available = 0;
     // calculating local sum
     for (QString l: available_letters)
         sum_of_available += operator ()(current_letter, l);
-    qDebug() << "sum_of_available = " << sum_of_available;
+    //qDebug() << "sum_of_available = " << sum_of_available;
     // generating random value
     double r = ((double)rand() / (double)RAND_MAX) * sum_of_available;
     // obtaining letter
     int i = 0; // index of available_letters vector
     while (true) {
         r -= operator ()(current_letter, available_letters[i]);
-        qDebug() << available_letters[i] << ": r -= " << operator ()(current_letter, available_letters[i]) << " = " << r;
+        //qDebug() << available_letters[i] << ": r -= " << operator ()(current_letter, available_letters[i]) << " = " << r;
         if (r <= 0) {
-            qDebug() << "next_letter for " << current_letter << " is " << available_letters[i];
+            //qDebug() << "next_letter for " << current_letter << " is " << available_letters[i];
             return available_letters[i];
         }
         ++i;
     }
 }
 
-std::pair<QString, QString> Probs::define_first_letterpair() {
+bool pair_cmp_greater(const pair<double, pair<QString, QString>>& lhs, const pair<double, pair<QString, QString>>& rhs) {
+    return lhs.first > rhs.first;
+}
+
+std::pair<QString, QString> Probs::define_first_letterpair(int n) {
+    vector< pair<double, pair<QString, QString>> > v;
     // temp: first letter-pair is always the hardest one
     std::pair<QString, QString> max_pair;
     double max_prob = -1;
     for (auto it1 = probs_.begin(); it1 != probs_.end(); ++it1) {
         for (auto it2 = it1->second.begin(); it2 != it1->second.end(); ++it2) {
-            if (probs_[it1->first][it2->first] > max_prob) {
-                max_prob = probs_[it1->first][it2->first];
-                max_pair = make_pair(it1->first, it2->first);
-            }
+            v.push_back(make_pair(probs_[it1->first][it2->first], make_pair(it1->first, it2->first)));
         }
     }
-    //if (rand() % 2 == 0) // 50% times we swap first and second letters
-        return max_pair;
-    //return make_pair(max_pair.second, max_pair.first);
+    std::nth_element(v.begin(), v.begin() + n, v.end(), pair_cmp_greater);
+    std::pair<QString, QString> result_pair = v[rand() % n].second; // random of first n elements
+    if (rand() % 2 == 0) // 50% times we swap first and second letters
+        return result_pair;
+    return make_pair(result_pair.second, result_pair.first);
 }
 
 void Probs::save_to_file(QString filepath) {
@@ -139,7 +134,7 @@ void Probs::save_to_file(QString filepath) {
     for (it1 = probs_.begin(); it1 != probs_.end(); ++it1) {
         map<QString, double>::iterator it2;
         for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2) {
-            QString line = it1->first + " " + it2->first + ": " + QString::number(it2->second) + "\n";
+            QString line = it1->first + " " + it2->first + " " + QString::number(it2->second) + "\n";
             outstream << line;
         }
     }

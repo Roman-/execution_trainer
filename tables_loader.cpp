@@ -73,7 +73,7 @@ map<QString, map<QString, QString> > load_algs_table(QString file_path) {
     map<QString, map<QString, QString>> result;
     QVector<QString> letters_vec;
     QFile file(file_path);
-    assert(file.open(QIODevice::ReadOnly | QIODevice::Text) && "cant open file");
+    assert(file.open(QIODevice::ReadOnly | QIODevice::Text) && "load_algs_table(): cant open file");
     /* first line = letters */
     QString letters = file.readLine();
     QTextStream letters_stream(&letters);
@@ -104,4 +104,16 @@ map<QString, map<QString, QString> > load_algs_table(QString file_path) {
         }
     }
     return result;
+}
+
+QString get_alg(const QString& letter1, const QString& letter2, map<QString, map<QString, QString> >& algs) {
+    auto it1 = algs.find(letter1);
+    if (it1 == algs.cend()) {
+        return algs[letter2][letter1];
+    }
+    auto it2 = it1->second.find(letter2);
+    if (it2 == it1->second.cend()) {
+        return algs[letter2][letter1];
+    }
+    return algs[letter1][letter2];
 }

@@ -18,14 +18,18 @@ SOURCES += main.cpp\
     my_chains.cpp \
     probs.cpp \
     linewithtabs.cpp \
-    tables_loader.cpp
+    tables_loader.cpp \
+    mylabel.cpp \
+    globals.cpp
 
 HEADERS  += mainwindow.h \
     generator.h \
     my_chains.h \
     probs.h \
     linewithtabs.h \
-    tables_loader.h
+    tables_loader.h \
+    mylabel.h \
+    globals.h
 
 FORMS    += mainwindow.ui
 
