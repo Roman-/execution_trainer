@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDebug>
 #include <QLabel>
+#include "globals.h"
 
 class MyLabel : public QLabel
 {

@@ -50,6 +50,42 @@ vector<QString> generate_chain_by_shuffling(vector<pair<int, int>> chain, vector
     return r;
 }
 
+vector<QString> generate_chain_by_shuffling(vector<pair<int, int>> chain, vector<vector<QString>> speffz, Probs p) {
+    vector<QString> best_chain = generate_chain_by_shuffling(chain, speffz);
+    double best_sum = chain_difficulty(best_chain, p);
+    for (int attempt = 0; attempt < kShufflingChainAttempts; ++attempt) {
+        double current_sum = 0;
+        rotate(chain.begin(),
+               chain.begin() + rand() %  chain.size(),
+               chain.end());
+        for (auto& sp_arr: speffz)
+            rotate(sp_arr.begin(),
+                   sp_arr.begin() + rand() %  sp_arr.size(),
+                   sp_arr.end());
+        random_shuffle(speffz.begin(), speffz.end());
+
+        vector<QString> r; // temp result
+        for (auto c_el: chain)
+            r.push_back( speffz[c_el.first][c_el.second] );
+        current_sum = chain_difficulty(r, p);
+        // with some low probability, better chain is rejected (makes generation a bit more random)
+        if (current_sum > best_sum
+            && ((double)rand() / RAND_MAX > kBetterChainRejectedCoeff)) {
+            best_sum = current_sum;
+            best_chain = r;
+        }
+    }
+    return best_chain;
+}
+
+double chain_difficulty(vector<QString>& chain, Probs& p) {
+    assert (chain.size() % 2 == 0);
+    double r = 0;
+    for (int i = 0; i < chain.size(); i += 2)
+        r += p(chain[i*2], chain[i*2+1]);
+    return r;
+}
+
 int side_that_contain(const vector<vector<QString>>& speffz, const QString& letter) {
     for (uint i = 0; i < speffz.size(); ++i)
         if (std::find(speffz[i].begin(), speffz[i].end(), letter) != speffz[i].end()) {

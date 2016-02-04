@@ -7,18 +7,19 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     p = nullptr;
-
-    current_length = false; // TODO from settings
+    load_settings();
 
     chainInfoLabel = new QLabel("...", ui->centralWidget);
     chainInfoLabel->setStyleSheet("QLabel { background-color : #161616; color : #228888; }");
+    chainInfoLabel->setFont(QFont(kChainInfoLabelFontFamily, current_font_size * 0.7f));
+    algInfoLabel = new QLabel("hint", ui->centralWidget);
+    algInfoLabel->setStyleSheet("QLabel { background-color : #080808; color : #4477aa; }");
+    algInfoLabel->setFont(QFont(kAlgInfoLabelFontFamily, current_font_size * 0.8f));
 
-    set_element(el_x); // todo from table
+    set_element(current_element);
 
     images = load_images(kDirImages);
 
-    algInfoLabel = new QLabel("hint", ui->centralWidget);
-    algInfoLabel->setStyleSheet("QLabel { background-color : #080808; color : #4477aa; }");
 
     allocate_labels();
     update_chainInfoLabel();
@@ -37,7 +38,7 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 
 int MainWindow::index_of_label_below_current() {
     int c_y = labels[current_label]->y();
-    int i = current_label;
+    uint i = current_label;
     while (i < labels.size() && labels[i]->y() == c_y)
         ++i;
     if (i == labels.size())
@@ -63,28 +64,26 @@ int MainWindow::index_of_label_above_current() {
 
 void MainWindow::clear_labels() {
     //clear
-    for (int i = 0; i < labels.size(); ++i) {
+    for (uint i = 0; i < labels.size(); ++i) {
         delete labels[i];//->~MyLabel();
     }
     labels.clear();
 }
 
 void MainWindow::create_labels() {
-    for (int i = 0; i < letters_perm.size(); i += 2) {
-        MyLabel* label = new MyLabel(images[letters_perm[i]][letters_perm[i+1]], ui->centralWidget, 15);
+    for (uint i = 0; i < letters_perm.size(); i += 2) {
+        MyLabel* label = new MyLabel(images[letters_perm[i]][letters_perm[i+1]], ui->centralWidget, current_font_size);
         labels.push_back(label);
         layout()->addWidget(label);
     }
     labels[0]->underline();
     current_label = 0;
-//    for (MyLabel* l: labels)
-//        layout()->removeWidget(l);
     allocate_labels();
 }
 
 int MainWindow::index_of_endline_label() {
     int c_y = labels[current_label]->y();
-    int i = current_label;
+    uint i = current_label;
     while (i < labels.size() && labels[i]->y() == c_y)
         ++i;
     return i - 1;
@@ -104,9 +103,9 @@ void MainWindow::allocate_labels() {
     chainInfoLabel->setGeometry(2, 2, width() - 4, chainInfoLabel->height() + 1);
     //labels with words
     QPoint topleft(10, chainInfoLabel->height() + 10); // top-left corner where grd starts
-    const int v_space = 7, h_space = 10; // vertical and gorisontal indentations
+    const int v_space = 7, h_space = current_font_size * 0.8; // vertical and gorisontal indentations
     int l = topleft.x(), t = topleft.y();
-    for (int i = 0; i < labels.size(); i++) {
+    for (uint i = 0; i < labels.size(); i++) {
         l = (i == 0) ? topleft.x() : labels[i-1]->pos().x() +  labels[i-1]->width() + h_space;
         if (l + labels[i]->width() + v_space > width()) {
             t += labels[i]->height() + v_space;
@@ -114,6 +113,8 @@ void MainWindow::allocate_labels() {
         }
         labels[i]->setPos(l, t);
     }
+    if (labels.size() != 0)
+        labels[current_label]->underline();
     //hint label
     int layoutEnd = (labels.size() == 0) ?
                 chainInfoLabel->y() + chainInfoLabel->width() + v_space :
@@ -201,28 +202,33 @@ void MainWindow::keyPressEvent(QKeyEvent * event) {
         showAlgInfo();
     }
     if (event->key() == Qt::Key_Plus || event->key() == Qt::Key_Equal) { // increase font size
-        algInfoLabel->setFont(QFont(algInfoLabel->font().family(), algInfoLabel->font().pointSize() + 1));
-        chainInfoLabel->setFont(QFont(algInfoLabel->font().family(), algInfoLabel->font().pointSize() + 1));
+        current_font_size++;
+        chainInfoLabel->setFont(QFont(kChainInfoLabelFontFamily, current_font_size * 0.7f));
+        algInfoLabel->setFont(QFont(kAlgInfoLabelFontFamily, current_font_size * 0.8f));
         for (auto& l: labels) {
-            l->setFont(QFont(l->font().family(), l->font().pointSize() + 1));
+            l->setFont(QFont(kLabelsFontFamily, current_font_size));
             l->adjustSize();
         }
         allocate_labels();
     }
     if (event->key() == Qt::Key_Minus) { // decrease font size
-        algInfoLabel->setFont(QFont(algInfoLabel->font().family(), algInfoLabel->font().pointSize() - 1));
-        chainInfoLabel->setFont(QFont(algInfoLabel->font().family(), algInfoLabel->font().pointSize() - 1));
+        if (current_font_size > 8)
+            current_font_size--;
+        chainInfoLabel->setFont(QFont(kChainInfoLabelFontFamily, current_font_size * 0.7f));
+        algInfoLabel->setFont(QFont(kAlgInfoLabelFontFamily, current_font_size * 0.8f));
         for (auto& l: labels) {
-            l->setFont(QFont(l->font().family(), l->font().pointSize() - 1));
+            l->setFont(QFont(kLabelsFontFamily, current_font_size));
             l->adjustSize();
         }
         allocate_labels();
     }
     if (event->key() == Qt::Key_Escape) { // clear or exit
-        if (labels.size() == 0)
+        if (labels.size() == 0) {
+            save_settings();
             exit(0);
+        }
         clear_labels(); // without saving
-        algInfoLabel->setText("clear layout without saving");
+        algInfoLabel->setText("clear");
         update_chainInfoLabel();
     }
     if (event->key() == Qt::Key_X) { // switch elem
@@ -289,7 +295,7 @@ void MainWindow::commit_and_save_probs() {
     if (p == nullptr || labels.size() == 0)
         return; // haven't loaded probs yet
     // applying changes
-    for (int i = 0; i < labels.size(); ++i) {
+    for (uint i = 0; i < labels.size(); ++i) {
         double& c_prob = p->operator ()(letters_perm[i*2], letters_perm[i*2 + 1]);
         if (labels[i]->state() == 0) // easy
             c_prob *= k_easy;
@@ -323,4 +329,41 @@ void MainWindow::update_chainInfoLabel() {
     chainInfoLabel->setText(s);
     chainInfoLabel->adjustSize();
     chainInfoLabel->setGeometry(2, 2, width() - 4, chainInfoLabel->height() + 1);
+}
+
+void MainWindow::load_settings() {
+    QSettings* settings_ = new QSettings(kDirSettings, QSettings::NativeFormat);
+    QFile settings_file(kDirSettings);
+    if (settings_file.exists() == false) { // settings file not created yet
+        settings_->setValue("exec/font_size", 15);
+        settings_->setValue("exec/element", (int)el_x);
+        settings_->setValue("exec/length", false);
+        settings_->setValue("exec/geometry", QRect(30,30,300,300));
+        settings_->sync(); // create file
+
+        QMessageBox msgBox;
+        msgBox.setText((QString)"Settings file created: " + kDirSettings + "\nPlease configure before next launch");
+        msgBox.exec();
+        exit(0);
+    }
+    // load
+    current_font_size = settings_->value("exec/font_size", 15).toInt();
+    current_element = (element)(settings_->value("exec/element", (int)el_x).toInt());
+    setGeometry(settings_->value("exec/geometry", QRect(30,30,300,300)).toRect());
+    current_length = settings_->value("exec/length", false).toBool();
+}
+
+void MainWindow::save_settings() {
+    QSettings* settings_ = new QSettings(kDirSettings, QSettings::NativeFormat);
+    settings_->setValue("exec/font_size", current_font_size);
+    settings_->setValue("exec/element", (int)current_element);
+    settings_->setValue("exec/length", current_length);
+    settings_->setValue("exec/geometry", geometry());
+    settings_->sync();
+}
+
+void MainWindow::closeEvent (QCloseEvent *event)
+{
+    save_settings();
+    event->accept();
 }

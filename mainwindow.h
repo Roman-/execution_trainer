@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QSettings>
+#include <QMessageBox>
+#include <QCloseEvent>
 #include <vector>
 #include <map>
 #include "mylabel.h"
@@ -32,6 +35,7 @@ public:
     ~MainWindow();
 
 private slots:
+    void save_settings();
 
 private:
     // ui-specific
@@ -39,6 +43,7 @@ private:
     QLabel* algInfoLabel;
     QLabel* chainInfoLabel;
     int current_label;
+    int current_font_size;
     Ui::MainWindow *ui;
 
     // BLD-specific
@@ -50,6 +55,7 @@ private:
     element current_element;
 
     void resizeEvent(QResizeEvent* event);
+    void closeEvent (QCloseEvent *event);
     void keyPressEvent(QKeyEvent * event);
     void clear_labels(); // remove from form and clear vector
     void create_labels(); // delete previous labels and create new
@@ -60,6 +66,7 @@ private:
     void set_element(element el);
     void commit_and_save_probs(); // applies changes to probs, saves to file and clears screen
     void update_chainInfoLabel(); // based on current event and length
+    void load_settings();
 
     // navigation
     int index_of_label_below_current();

@@ -3,12 +3,11 @@
 MyLabel::MyLabel(const QString& text, QWidget *parent, int fontSize, int x, int y): QLabel(parent)
 {
     QLabel::setText(text);
-    setFont(QFont("Times", fontSize));
+    setFont(QFont(kLabelsFontFamily, fontSize));
     setStyleSheet("QLabel { background-color : transparent; color : white; }");
     setGeometry(x, y, 0, 0);
     state_ = 1;
     adjustSize(); // call this last
-    //parent->layout()->addWidget(*this);
 }
 
 void MyLabel::slotClicked()

@@ -22,6 +22,7 @@
 #include <QString>
 #include <algorithm>
 #include "probs.h"
+#include "globals.h"
 
 using namespace std;
 
@@ -37,12 +38,15 @@ vector<QString> generate_initial_chain_wings(vector<QString> letters, uint lengt
 // using probs
 vector<QString> generate_initial_chain_type1(vector<vector<QString>> speffz, uint length, Probs p);
 vector<QString> generate_initial_chain_wings(vector<QString> letters, uint length, Probs p);
+vector<QString> generate_chain_by_shuffling(vector<pair<int, int>> chain, vector<vector<QString>> speffz, Probs p);
 
 // helper funcs
 // removes given letter from vector of vector of letters (speffz that is currently used in chain generating func)
 void remove_letter_from_speffz(vector<vector<QString>> &speffz, QString letter);
 // creates a vector of available letters based on available sides and remaining lettres (speffz)
 vector<QString> make_available_letters_vector(const vector<vector<QString> > &speffz, const vector<int> &available_sides);
+// calculates total chain difficulty based on probs
+double chain_difficulty(vector<QString> &chain, Probs &p);
 
 
 
